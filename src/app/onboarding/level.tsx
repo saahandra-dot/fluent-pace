@@ -3,8 +3,10 @@ import {
     useRouter,
 } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useState } from 'react';
 import {
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     useColorScheme,
@@ -15,9 +17,52 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     darkColors,
     lightColors,
+    radius,
     spacing,
     typography,
 } from '../../constants/theme';
+import { ProficiencyLevel } from '../../types/learner';
+
+
+
+type LevelOption = {
+    code: ProficiencyLevel;
+    title: string;
+    description: string;
+};
+
+const levels: LevelOption[] = [
+    {
+        code: 'A1',
+        title: 'I’m just starting',
+        description:
+            'I know a few words or phrases, but I cannot have a conversation yet.',
+    },
+    {
+        code: 'A2',
+        title: 'I know the basics',
+        description:
+            'I can understand and use simple language in familiar everyday situations.',
+    },
+    {
+        code: 'B1',
+        title: 'I can hold simple conversations',
+        description:
+            'I can talk about familiar topics, daily life, work, travel, and experiences.',
+    },
+    {
+        code: 'B2',
+        title: 'I can communicate comfortably',
+        description:
+            'I can have detailed conversations and understand most everyday speech.',
+    },
+    {
+        code: 'C1',
+        title: 'I’m already advanced',
+        description:
+            'I can express complex ideas and understand demanding conversations and texts.',
+    },
+];
 
 export default function LevelScreen() {
     const colorScheme = useColorScheme();
@@ -40,6 +85,25 @@ export default function LevelScreen() {
 
     const styles = createStyles(colors);
 
+    const [selectedLevel, setSelectedLevel] =
+        useState<ProficiencyLevel | null>(null);
+
+    function handleContinue() {
+        if (!selectedLevel) {
+            return;
+        }
+
+        router.push({
+            pathname: '/onboarding/goals',
+            params: {
+                nativeLanguage,
+                targetLanguage,
+                region,
+                currentLevel: selectedLevel,
+            },
+        });
+    }
+
     return (
         <SafeAreaView style={styles.screen}>
             <StatusBar
@@ -50,7 +114,10 @@ export default function LevelScreen() {
                 }
             />
 
-            <View style={styles.container}>
+            <ScrollView
+                contentContainerStyle={styles.container}
+                showsVerticalScrollIndicator={false}
+            >
                 <Pressable
                     onPress={() => router.back()}
                     style={styles.backButton}
@@ -66,40 +133,140 @@ export default function LevelScreen() {
                 </Text>
 
                 <Text style={styles.title}>
-                    Language preferences complete.
+                    How much {targetLanguage} do you know?
                 </Text>
 
-                <View style={styles.summary}>
-                    <Text style={styles.label}>
-                        I SPEAK
+                <Text style={styles.subtitle}>
+                    Choose the description that feels closest
+                    to your current ability. You can change
+                    this later.
+                </Text>
+
+                <View style={styles.languageSummary}>
+                    <Text style={styles.languageSummaryLabel}>
+                        YOU'RE LEARNING
                     </Text>
 
-                    <Text style={styles.value}>
-                        {nativeLanguage}
-                    </Text>
-
-                    <Text style={styles.label}>
-                        I'M LEARNING
-                    </Text>
-
-                    <Text style={styles.value}>
+                    <Text style={styles.languageSummaryText}>
                         {targetLanguage}
-                    </Text>
-
-                    <Text style={styles.label}>
-                        REGIONAL PREFERENCE
-                    </Text>
-
-                    <Text style={styles.value}>
-                        {region}
+                        {region &&
+                            region !== 'General' &&
+                            ` · ${region}`}
                     </Text>
                 </View>
 
-                <Text style={styles.nextText}>
-                    We'll choose your current proficiency
-                    level in Step 7.
+                <View style={styles.options}>
+                    {levels.map((level) => {
+                        const isSelected =
+                            selectedLevel === level.code;
+
+                        return (
+                            <Pressable
+                                key={level.code}
+                                onPress={() =>
+                                    setSelectedLevel(level.code)
+                                }
+                                accessibilityRole="button"
+                                accessibilityState={{
+                                    selected: isSelected,
+                                }}
+                                style={({ pressed }) => [
+                                    styles.levelCard,
+
+                                    isSelected &&
+                                    styles.levelCardSelected,
+
+                                    pressed &&
+                                    styles.levelCardPressed,
+                                ]}
+                            >
+                                <View
+                                    style={[
+                                        styles.levelBadge,
+
+                                        isSelected &&
+                                        styles.levelBadgeSelected,
+                                    ]}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.levelCode,
+
+                                            isSelected &&
+                                            styles.levelCodeSelected,
+                                        ]}
+                                    >
+                                        {level.code}
+                                    </Text>
+                                </View>
+
+                                <View style={styles.levelContent}>
+                                    <Text
+                                        style={[
+                                            styles.levelTitle,
+
+                                            isSelected &&
+                                            styles.levelTitleSelected,
+                                        ]}
+                                    >
+                                        {level.title}
+                                    </Text>
+
+                                    <Text
+                                        style={styles.levelDescription}
+                                    >
+                                        {level.description}
+                                    </Text>
+                                </View>
+
+                                <View
+                                    style={[
+                                        styles.radioOuter,
+
+                                        isSelected &&
+                                        styles.radioOuterSelected,
+                                    ]}
+                                >
+                                    {isSelected && (
+                                        <View style={styles.radioInner} />
+                                    )}
+                                </View>
+                            </Pressable>
+                        );
+                    })}
+                </View>
+
+                <Text style={styles.helperText}>
+                    This is only a starting estimate. The app
+                    will adapt as it learns what you understand.
                 </Text>
-            </View>
+
+                <Pressable
+                    disabled={!selectedLevel}
+                    onPress={handleContinue}
+                    style={({ pressed }) => [
+                        styles.continueButton,
+
+                        !selectedLevel &&
+                        styles.continueButtonDisabled,
+
+                        pressed &&
+                        selectedLevel !== null &&
+                        styles.continueButtonPressed,
+                    ]}
+                >
+                    <Text
+                        style={[
+                            styles.continueButtonText,
+
+                            !selectedLevel &&
+                            styles.continueButtonTextDisabled,
+                        ]}
+                    >
+                        Continue
+                    </Text>
+                </Pressable>
+            </ScrollView>
         </SafeAreaView>
     );
 }
@@ -114,8 +281,10 @@ const createStyles = (
         },
 
         container: {
-            flex: 1,
-            padding: spacing.lg,
+            flexGrow: 1,
+            paddingHorizontal: spacing.lg,
+            paddingTop: spacing.sm,
+            paddingBottom: spacing.xl,
         },
 
         backButton: {
@@ -143,32 +312,152 @@ const createStyles = (
             color: colors.textPrimary,
         },
 
-        summary: {
-            backgroundColor: colors.surface,
-            borderRadius: 20,
-            borderWidth: 1,
-            borderColor: colors.border,
-            padding: spacing.lg,
-            marginTop: spacing.xl,
-            gap: spacing.xs,
+        subtitle: {
+            ...typography.body,
+            color: colors.textSecondary,
+            marginTop: spacing.sm,
         },
 
-        label: {
+        languageSummary: {
+            backgroundColor: colors.backgroundSoft,
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: radius.lg,
+            padding: spacing.md,
+            marginTop: spacing.xl,
+            marginBottom: spacing.lg,
+        },
+
+        languageSummaryLabel: {
             ...typography.caption,
             color: colors.textMuted,
             fontWeight: '700',
             letterSpacing: 0.7,
-            marginTop: spacing.md,
         },
 
-        value: {
+        languageSummaryText: {
             ...typography.subheading,
+            color: colors.textPrimary,
+            marginTop: spacing.xs,
+        },
+
+        options: {
+            gap: spacing.sm,
+        },
+
+        levelCard: {
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: radius.lg,
+            padding: spacing.md,
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+
+        levelCardSelected: {
+            backgroundColor: colors.surfaceGreen,
+            borderColor: colors.primary,
+        },
+
+        levelCardPressed: {
+            opacity: 0.8,
+        },
+
+        levelBadge: {
+            width: 46,
+            height: 46,
+            borderRadius: radius.md,
+            backgroundColor: colors.backgroundSoft,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginRight: spacing.md,
+        },
+
+        levelBadgeSelected: {
+            backgroundColor: colors.primary,
+        },
+
+        levelCode: {
+            ...typography.bodyStrong,
+            color: colors.primary,
+        },
+
+        levelCodeSelected: {
+            color: colors.textOnPrimary,
+        },
+
+        levelContent: {
+            flex: 1,
+            paddingRight: spacing.sm,
+        },
+
+        levelTitle: {
+            ...typography.bodyStrong,
             color: colors.textPrimary,
         },
 
-        nextText: {
-            ...typography.body,
+        levelTitleSelected: {
+            color: colors.primaryDark,
+        },
+
+        levelDescription: {
+            ...typography.caption,
             color: colors.textSecondary,
-            marginTop: spacing.lg,
+            marginTop: spacing.xs,
+        },
+
+        radioOuter: {
+            width: 22,
+            height: 22,
+            borderRadius: 11,
+            borderWidth: 2,
+            borderColor: colors.borderStrong,
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+
+        radioOuterSelected: {
+            borderColor: colors.primary,
+        },
+
+        radioInner: {
+            width: 10,
+            height: 10,
+            borderRadius: 5,
+            backgroundColor: colors.primary,
+        },
+
+        helperText: {
+            ...typography.caption,
+            color: colors.textMuted,
+            marginTop: spacing.md,
+            marginBottom: spacing.xl,
+        },
+
+        continueButton: {
+            minHeight: 54,
+            backgroundColor: colors.primary,
+            borderRadius: radius.md,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: 'auto',
+        },
+
+        continueButtonDisabled: {
+            backgroundColor: colors.backgroundMuted,
+        },
+
+        continueButtonPressed: {
+            opacity: 0.85,
+        },
+
+        continueButtonText: {
+            ...typography.bodyStrong,
+            color: colors.textOnPrimary,
+        },
+
+        continueButtonTextDisabled: {
+            color: colors.textMuted,
         },
     });
