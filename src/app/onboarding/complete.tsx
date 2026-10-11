@@ -1,4 +1,7 @@
 import {
+    useRouter,
+} from 'expo-router';
+import {
     useSQLiteContext,
 } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
@@ -7,6 +10,7 @@ import {
     useState,
 } from 'react';
 import {
+    Pressable,
     ScrollView,
     StyleSheet,
     Text,
@@ -34,6 +38,9 @@ import {
 export default function OnboardingCompleteScreen() {
     const colorScheme =
         useColorScheme();
+
+    const router =
+        useRouter();
 
     const db =
         useSQLiteContext();
@@ -88,9 +95,15 @@ export default function OnboardingCompleteScreen() {
         };
     }, [db]);
 
+    function handleGoHome() {
+        router.replace('/home');
+    }
+
     if (isLoading) {
         return (
-            <SafeAreaView style={styles.screen}>
+            <SafeAreaView
+                style={styles.screen}
+            >
                 <StatusBar
                     style={
                         colorScheme === 'dark'
@@ -100,7 +113,9 @@ export default function OnboardingCompleteScreen() {
                 />
 
                 <View style={styles.center}>
-                    <Text style={styles.loadingText}>
+                    <Text
+                        style={styles.loadingText}
+                    >
                         Loading your profile...
                     </Text>
                 </View>
@@ -110,7 +125,9 @@ export default function OnboardingCompleteScreen() {
 
     if (!learnerProfile) {
         return (
-            <SafeAreaView style={styles.screen}>
+            <SafeAreaView
+                style={styles.screen}
+            >
                 <StatusBar
                     style={
                         colorScheme === 'dark'
@@ -124,7 +141,9 @@ export default function OnboardingCompleteScreen() {
                         Profile not found.
                     </Text>
 
-                    <Text style={styles.subtitle}>
+                    <Text
+                        style={styles.subtitle}
+                    >
                         Complete onboarding before
                         continuing.
                     </Text>
@@ -134,7 +153,9 @@ export default function OnboardingCompleteScreen() {
     }
 
     return (
-        <SafeAreaView style={styles.screen}>
+        <SafeAreaView
+            style={styles.screen}
+        >
             <StatusBar
                 style={
                     colorScheme === 'dark'
@@ -149,8 +170,12 @@ export default function OnboardingCompleteScreen() {
                 }
                 showsVerticalScrollIndicator={false}
             >
-                <View style={styles.successBadge}>
-                    <Text style={styles.successText}>
+                <View
+                    style={styles.successBadge}
+                >
+                    <Text
+                        style={styles.successText}
+                    >
                         SETUP COMPLETE
                     </Text>
                 </View>
@@ -159,13 +184,17 @@ export default function OnboardingCompleteScreen() {
                     Your learning experience is ready.
                 </Text>
 
-                <Text style={styles.subtitle}>
-                    Your profile is now saved on this
-                    device and will be used to personalize
-                    your learning.
+                <Text
+                    style={styles.subtitle}
+                >
+                    Your profile is saved on this
+                    device and will be used to
+                    personalize your learning.
                 </Text>
 
-                <View style={styles.summaryCard}>
+                <View
+                    style={styles.summaryCard}
+                >
                     <Text style={styles.label}>
                         I SPEAK
                     </Text>
@@ -237,6 +266,22 @@ export default function OnboardingCompleteScreen() {
                         ),
                     )}
                 </View>
+
+                <Pressable
+                    onPress={handleGoHome}
+                    style={({ pressed }) => [
+                        styles.homeButton,
+
+                        pressed &&
+                        styles.homeButtonPressed,
+                    ]}
+                >
+                    <Text
+                        style={styles.homeButtonText}
+                    >
+                        Go to Home
+                    </Text>
+                </Pressable>
             </ScrollView>
         </SafeAreaView>
     );
@@ -327,5 +372,24 @@ const createStyles = (
             ...typography.body,
             color: colors.textPrimary,
             marginTop: spacing.xs,
+        },
+
+        homeButton: {
+            minHeight: 54,
+            backgroundColor:
+                colors.primary,
+            borderRadius: radius.md,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: spacing.xl,
+        },
+
+        homeButtonPressed: {
+            opacity: 0.85,
+        },
+
+        homeButtonText: {
+            ...typography.bodyStrong,
+            color: colors.textOnPrimary,
         },
     });

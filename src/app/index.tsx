@@ -1,5 +1,15 @@
-import { useRouter } from 'expo-router';
+import {
+  Redirect,
+  useRouter,
+} from 'expo-router';
+import {
+  useSQLiteContext,
+} from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
+import {
+  useEffect,
+  useState,
+} from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -17,31 +27,123 @@ import {
   typography,
 } from '../constants/theme';
 
+import {
+  getLearnerProfile,
+} from '../services/learnerProfileService';
+
 export default function WelcomeScreen() {
-  const colorScheme = useColorScheme();
-  const router = useRouter();
+  const colorScheme =
+    useColorScheme();
+
+  const router =
+    useRouter();
+
+  const db =
+    useSQLiteContext();
 
   const colors =
     colorScheme === 'dark'
       ? darkColors
       : lightColors;
 
-  const styles = createStyles(colors);
+  const styles =
+    createStyles(colors);
+
+  const [
+    hasProfile,
+    setHasProfile,
+  ] = useState<boolean | null>(
+    null,
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function checkProfile() {
+      try {
+        const profile =
+          await getLearnerProfile(db);
+
+        if (isMounted) {
+          setHasProfile(
+            profile !== null,
+          );
+        }
+      } catch (error) {
+        console.error(
+          'Failed to check learner profile:',
+          error,
+        );
+
+        if (isMounted) {
+          setHasProfile(false);
+        }
+      }
+    }
+
+    checkProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [db]);
+
+  if (hasProfile === null) {
+    return (
+      <SafeAreaView
+        style={styles.screen}
+      >
+        <StatusBar
+          style={
+            colorScheme === 'dark'
+              ? 'light'
+              : 'dark'
+          }
+        />
+
+        <View
+          style={styles.loadingContainer}
+        >
+          <Text
+            style={styles.loadingText}
+          >
+            Preparing your learning space...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (hasProfile) {
+    return (
+      <Redirect href="/home" />
+    );
+  }
 
   function handleGetStarted() {
     router.push('/onboarding');
   }
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView
+      style={styles.screen}
+    >
       <StatusBar
-        style={colorScheme === 'dark' ? 'light' : 'dark'}
+        style={
+          colorScheme === 'dark'
+            ? 'light'
+            : 'dark'
+        }
       />
 
       <View style={styles.container}>
         <View style={styles.topSection}>
-          <View style={styles.brandBadge}>
-            <Text style={styles.brandText}>
+          <View
+            style={styles.brandBadge}
+          >
+            <Text
+              style={styles.brandText}
+            >
               LANGUAGE, MADE PERSONAL
             </Text>
           </View>
@@ -50,41 +152,68 @@ export default function WelcomeScreen() {
             Learn what you'll actually say.
           </Text>
 
-          <Text style={styles.subtitle}>
-            Personalized lessons, conversations, and stories built
-            around your everyday life.
+          <Text
+            style={styles.subtitle}
+          >
+            Personalized lessons,
+            conversations, and stories
+            built around your everyday
+            life.
           </Text>
         </View>
 
-        <View style={styles.exampleSection}>
-          <View style={styles.exampleCard}>
-            <Text style={styles.exampleLabel}>
+        <View
+          style={styles.exampleSection}
+        >
+          <View
+            style={styles.exampleCard}
+          >
+            <Text
+              style={styles.exampleLabel}
+            >
               YOUR REAL LIFE
             </Text>
 
-            <Text style={styles.exampleSource}>
-              “I'm here to pick up my daughter.”
+            <Text
+              style={styles.exampleSource}
+            >
+              “I'm here to pick up my
+              daughter.”
             </Text>
           </View>
 
-          <View style={styles.lessonCard}>
-            <Text style={styles.lessonLabel}>
+          <View
+            style={styles.lessonCard}
+          >
+            <Text
+              style={styles.lessonLabel}
+            >
               YOUR LESSON
             </Text>
 
-            <Text style={styles.lessonTarget}>
+            <Text
+              style={styles.lessonTarget}
+            >
               Vengo a recoger a mi hija.
             </Text>
 
-            <Text style={styles.lessonHint}>
-              Spanish · Everyday conversation
+            <Text
+              style={styles.lessonHint}
+            >
+              Spanish · Everyday
+              conversation
             </Text>
           </View>
         </View>
 
-        <View style={styles.bottomSection}>
-          <Text style={styles.bottomText}>
-            Your lessons become more useful as the app learns what
+        <View
+          style={styles.bottomSection}
+        >
+          <Text
+            style={styles.bottomText}
+          >
+            Your lessons become more
+            useful as the app learns what
             matters to you.
           </Text>
 
@@ -92,10 +221,16 @@ export default function WelcomeScreen() {
             onPress={handleGetStarted}
             style={({ pressed }) => [
               styles.primaryButton,
-              pressed && styles.primaryButtonPressed,
+
+              pressed &&
+              styles.primaryButtonPressed,
             ]}
           >
-            <Text style={styles.primaryButtonText}>
+            <Text
+              style={
+                styles.primaryButtonText
+              }
+            >
               Get Started
             </Text>
           </Pressable>
@@ -115,7 +250,21 @@ const createStyles = (
   StyleSheet.create({
     screen: {
       flex: 1,
-      backgroundColor: colors.background,
+      backgroundColor:
+        colors.background,
+    },
+
+    loadingContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: spacing.lg,
+    },
+
+    loadingText: {
+      ...typography.body,
+      color: colors.textSecondary,
+      textAlign: 'center',
     },
 
     container: {
@@ -131,7 +280,8 @@ const createStyles = (
 
     brandBadge: {
       alignSelf: 'flex-start',
-      backgroundColor: colors.backgroundMuted,
+      backgroundColor:
+        colors.backgroundMuted,
       borderRadius: radius.xl,
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.sm,
@@ -165,7 +315,8 @@ const createStyles = (
     },
 
     exampleCard: {
-      backgroundColor: colors.backgroundSoft,
+      backgroundColor:
+        colors.backgroundSoft,
       borderRadius: radius.lg,
       borderWidth: 1,
       borderColor: colors.border,
@@ -187,10 +338,12 @@ const createStyles = (
     },
 
     lessonCard: {
-      backgroundColor: colors.surfaceGreen,
+      backgroundColor:
+        colors.surfaceGreen,
       borderRadius: radius.lg,
       borderWidth: 1,
-      borderColor: colors.borderStrong,
+      borderColor:
+        colors.borderStrong,
       padding: spacing.lg,
       marginLeft: spacing.xl,
     },
@@ -226,7 +379,8 @@ const createStyles = (
     },
 
     primaryButton: {
-      backgroundColor: colors.primary,
+      backgroundColor:
+        colors.primary,
       minHeight: 54,
       borderRadius: radius.md,
       alignItems: 'center',
